@@ -15,6 +15,12 @@ header ethernet_t {
     bit<16> etherType;
 }
 
+/*Complete an ARP header. ARP header is defined in header arp_t.
+    The packet's arp header can be accessed with hdr.arp.
+    Set the opcode to ARP_OP_REPLY.
+    Change the target MAC to the original ARP packet's sender MAC.
+    Then swap the sender IP and target IP of the ARP header */
+
 header arp_t {
     bit<16> htype;
     bit<16> ptype;
@@ -343,16 +349,28 @@ control MyIngress(inout headers hdr,
         /* PART2_TODO: Complete action send_ARP_response 
            This action changes an incoming ARP request to an ARP reply 
            Argument sndMAC is the MAC address inquired by the request */
-        
         /* 1. Complete an ARP header. ARP header is defined in header arp_t.
               The packet's arp header can be accessed with hdr.arp.
               Set the opcode to ARP_OP_REPLY.
               Change the target MAC to the original ARP packet's sender MAC.
               Then swap the sender IP and target IP of the ARP header */
+        hdr.arp.op = ARP_OP_REPLY;
+        hdr.arp.tgtMAC = hdr.arp.sndMAC; //sndMAC or hdr.arp.sndMAC????
+        //hdr.arp.sndMAC = sndMAC;????
+
+        ipAddr_t temp = hdr.arp.sndIP;
+        hdr.arp.sndIP = hdr.arp.tgtIP;
+        hdr.arp.tgtIP = temp;
+
         /* 2. Complete an Ethernet header.  
               Change the dest MAC to the original packet's src MAC 
               Then set the src MAC to sndMAC */
+        
+        hdr.ethernet.dst_mac = hdr.ethernet.src_mac;
+        hdr.ethernet.src_mac = sndMAC;
+
         /* 3. Set egress_spec to the ingress_port */
+        standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
     
     action clone_packet() {
@@ -452,13 +470,22 @@ control MyIngress(inout headers hdr,
         }
         /* Check whether the packet's destination is router */
         else if (is_router_ip.apply().hit) {
+            //DONE
             /* PART1_TODO: handle the packet of which destination is the router */
             /* 1. If the packet is an ICMP echo packet, send an ICMP echo reply */
             /* using action send_ICMP_echo_reply (you should complete the action) */
-            
+            if(hdr.icmp.isValid() &&  hdr.icmp.type = ICMP_TYPE_ECHO){
+                send_ICMP_echo_reply();
+            }
             /* 2. Else if the packet is TCP or UDP packet, */
-            /* send an ICMP port unreachable msg using action send_ICMP_error */  
+            /* send an ICMP port unreachable msg using action send_ICMP_error */ 
+            else if(hdr.tcp.proto == IPV4_TCP || hdr.udp.proto == IPV4_UDP){
+                send_ICMP_error(ICMP_TYPE_DEST_UNREACHABLE, ICMP_CODE_PORT_UNREACHABLE);
+            } 
             /* 3. Otherwise, drop the packet */
+            else{
+                drop();
+            }
         }
         /* Check if the packet is an ARP packet*/
         else if (hdr.arp.isValid()) {
