@@ -1,0 +1,9 @@
+ip link set eth0 address 00:04:0d:00:00:01
+ip link set eth1 address 00:04:0d:00:00:02
+ip link set eth2 address 00:04:0d:00:00:03
+
+ip addr add 40.0.0.1/24 dev eth0
+ip addr add 100.0.0.8/24 dev eth1
+ip addr add 100.0.0.9/24 dev eth2
+
+cp /usr/local/lib/python3.11/site-packages/p4/tmp /usr/local/lib/python3.11/dist-packages/p4/ -r
