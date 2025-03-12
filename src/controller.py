@@ -48,6 +48,10 @@ class Route():
         # If the newRoute's cost is smaller, update the self's attributes 
         # to those of newRoute and return True.
         # Otherwise, return False
+        if (self.cost > newRoute.cost):
+            self.nextHopIP = newRoute.nextHopIP
+            self.cost = newRoute.cost
+            return True
         return False
         
 def dump_routing_table():
@@ -372,6 +376,7 @@ def main(p4info_file_path, bmv2_file_path, routing_info, adj_info, part):
                     print ("Receives ARP reply")
                     print ("egress port in int:", egress_port)
                     
+                    # DONE
                     ### PART2_TODO: Add arp_table and dmac_forward table entries
                     ### using the above information from ARP reply
                     ### Use p4info_helper.buildTableEntry and s1.WriteTableEntry as in A2
@@ -452,17 +457,36 @@ def main(p4info_file_path, bmv2_file_path, routing_info, adj_info, part):
                                 # PART3_TODO: Try to merge routes and update the routing table on success.
                                 # 1. Merge an existing route (routing_Table[entry.addr]) with 
                                 #    newRoute using the mergeRoute method. 
+                                merge = routing_table[entry.addr].mergeRoute(newRoute)
                                 # 2. If the method returns True, update the ipv4_route table in the data plane.
                                 # * Use prefix_length of 32 for the match_fields parameter of buildTableEntry
                                 # * Specify is_modify=True as the parameter of WriteTableEntry
+                                if (merge):
+                                    print ("Updating routing table entry for RIP response", entry.addr)  # TODO entry.addr or newRoute.nextHopIP???
+                                    table_entry = p4info_helper.buildTableEntry(
+                                        table_name="MyIngress.ipv4_route",
+                                        match_fields={"hdr.ipv4.dstAddr": (newRoute.nextHopIP, 32)},
+                                        action_name="MyIngress.forward_to_next_hop",
+                                        action_params={"next_hop": newRoute.nextHopIP}
+                                    )
+                                    s1.WriteTableEntry(table_entry, is_modify=True)
                                 # 3. If the method returns False, do nothing since there's no update.
                                 pass
                             else:
                                 # PART3_TODO: Route to a new address, add it.
                                 # 1. Add it to the routing_table dictionary using 
                                 # entry.addr as a key and new Route as a value.
+                                routing_table[entry.addr] = newRoute
                                 # 2. Insert a table entry to the ipv4_route table in the data plane. 
                                 # * Use prefix_length of 32 for the match_fields parameter of buildTableEntry
+                                print ("Add routing table entry for RIP response", entry.addr)  # TODO entry.addr or newRoute.nextHopIP???
+                                table_entry = p4info_helper.buildTableEntry(
+                                    table_name="MyIngress.ipv4_route",
+                                    match_fields={"hdr.ipv4.dstAddr": (newRoute.nextHopIP, 32)},
+                                    action_name="MyIngress.forward_to_next_hop",
+                                    action_params={"next_hop": newRoute.nextHopIP}
+                                )
+                                s1.WriteTableEntry(table_entry)
                                 pass
                                 
                         dump_routing_table()
