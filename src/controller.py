@@ -387,7 +387,7 @@ def main(p4info_file_path, bmv2_file_path, routing_info, adj_info, part):
                     print("Add MAC table entry", next_hop_mac, egress_port, egress_mac)
                     dmac_forward_entry = p4info_helper.buildTableEntry(
                         table_name="MyIngress.dmac_forward",
-                        match_fields={"hdr.ethernet.dst_address": next_hop_mac},
+                        match_fields={"hdr.ethernet.dstAddr": next_hop_mac},
                         action_name="MyIngress.forward_to_port",
                         action_params={
                             "egress_port": egress_port,
