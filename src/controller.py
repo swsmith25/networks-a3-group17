@@ -131,7 +131,7 @@ def init_part3(p4info_helper, s1, port_to_ip_mac:dict, adj_info:str):
             print ("Add routing table entry for neighborhoods", neighborIP)
             table_entry = p4info_helper.buildTableEntry(
                 table_name="MyIngress.ipv4_route",
-                match_fields={"hdr.ipv4.dstAddr": (neighborIP,32)},
+                match_fields={"hdr.ipv4.dstAddr": (neighborIP, 32)},
                 action_name="MyIngress.forward_to_next_hop",
                 action_params={"next_hop": neighborIP}
             )
@@ -465,7 +465,7 @@ def main(p4info_file_path, bmv2_file_path, routing_info, adj_info, part):
                                     print ("Updating routing table entry for RIP response", entry.addr)  # TODO entry.addr or newRoute.nextHopIP???
                                     table_entry = p4info_helper.buildTableEntry(
                                         table_name="MyIngress.ipv4_route",
-                                        match_fields={"hdr.ipv4.dstAddr": (newRoute.nextHopIP, 32)},
+                                        match_fields={"hdr.ipv4.dstAddr": (entry.addr, 32)},
                                         action_name="MyIngress.forward_to_next_hop",
                                         action_params={"next_hop": newRoute.nextHopIP}
                                     )
@@ -482,7 +482,7 @@ def main(p4info_file_path, bmv2_file_path, routing_info, adj_info, part):
                                 print ("Add routing table entry for RIP response", entry.addr)  # TODO entry.addr or newRoute.nextHopIP???
                                 table_entry = p4info_helper.buildTableEntry(
                                     table_name="MyIngress.ipv4_route",
-                                    match_fields={"hdr.ipv4.dstAddr": (newRoute.nextHopIP, 32)},
+                                    match_fields={"hdr.ipv4.dstAddr": (entry.addr, 32)},
                                     action_name="MyIngress.forward_to_next_hop",
                                     action_params={"next_hop": newRoute.nextHopIP}
                                 )
